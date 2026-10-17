@@ -1,0 +1,1807 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://wantware.dev/schema/wantware-ir/0.3/schema.json",
+  "title": "WantwareIR v0.3",
+  "description": "A single graph envelope with source, semantic, cognitive, and materialization strata supporting the process Expressive Want -> Assertive account of current and wanted states -> Declarative required truths -> accountable Commissive -> committer-authored Directives -> executable Imperatives -> evidence of fulfillment of the original Want. The four strata and seven stages are orthogonal to these speech acts. IR 0.3 has no dedicated delivery commitment record, commitment-to-contract binding, Directive issuance state, or committer-to-Directive authorship link; retain these separately in the engagement workflow using exact version/hash bindings. Readiness, ratification, handoff acceptance, provenance, and execution authorization do not establish a delivery commitment. Machine enforcement of the complete lineage requires a coordinated, versioned amendment to the schema, specification, producers, validators, and execution gates. These annotations preserve the 0.3 wire contract.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "meta",
+    "strata",
+    "handoffs",
+    "conception",
+    "conceptualization",
+    "intent",
+    "ontology",
+    "capabilities",
+    "procedures",
+    "evidence",
+    "success"
+  ],
+  "properties": {
+    "meta": { "$ref": "#/$defs/Meta" },
+    "strata": { "$ref": "#/$defs/StrataManifest" },
+    "readiness": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/ReadinessAssessment" },
+      "default": [],
+      "description": "Readiness assessments over exact stratum bindings. Boundedness licenses carriage; formalizable, cognifiable, and codifiable license the next handoff."
+    },
+    "ratifications": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Ratification" },
+      "default": [],
+      "description": "Attestations by the source authority or its recorded delegate over exact stratum bindings. Kept outside the object they ratify."
+    },
+    "handoffs": { "$ref": "#/$defs/HandoffModel" },
+
+    "conception": { "$ref": "#/$defs/Conception" },
+    "conceptualization": { "$ref": "#/$defs/Conceptualization" },
+
+    "intent": { "$ref": "#/$defs/Intent" },
+    "ontology": { "$ref": "#/$defs/Ontology" },
+    "state": { "$ref": "#/$defs/StateModel" },
+    "frame": { "$ref": "#/$defs/Frame" },
+    "assumptions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Assumption" },
+      "default": []
+    },
+    "openQuestions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/UnresolvedQuestion" },
+      "default": []
+    },
+    "constraints": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Constraint" },
+      "default": []
+    },
+    "evidence": { "$ref": "#/$defs/EvidenceModel" },
+    "satisfactionCases": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/SatisfactionCase" },
+      "default": [],
+      "description": "Formalizer-owned claim-warrant-evidence arguments. Observation acquisition and concrete bindings remain cognitive and materialization concerns."
+    },
+    "success": { "$ref": "#/$defs/SuccessModel" },
+
+    "mechanisms": { "$ref": "#/$defs/MechanismModel" },
+    "architecture": { "$ref": "#/$defs/Architecture" },
+    "capabilities": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Capability" },
+      "default": []
+    },
+    "procedures": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Procedure" },
+      "default": []
+    },
+    "dependencies": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Dependency" },
+      "default": []
+    },
+    "failures": { "$ref": "#/$defs/FailureModel" },
+    "observationPlan": { "$ref": "#/$defs/ObservationPlan" },
+    "satisfactionMappings": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/SatisfactionMapping" },
+      "default": []
+    },
+
+    "policies": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Policy" },
+      "default": [],
+      "description": "May hold semantic rules or cognitive selection rules. The owning stratum must be declared in strata.*.sections for each graph."
+    },
+
+    "tests": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/TestScenario" },
+      "default": []
+    },
+    "implementation": { "$ref": "#/$defs/Implementation" },
+
+    "changeControl": { "$ref": "#/$defs/ChangeControl" },
+    "provenance": { "$ref": "#/$defs/Provenance" }
+  },
+
+  "$defs": {
+    "SemanticId": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z][A-Za-z0-9+.-]*:.+$",
+      "description": "Stable semantic identifier, preferably URI-like, e.g. wantware://finance/transaction."
+    },
+    "SemanticRef": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Reference to another semantic object by stable semantic ID."
+    },
+    "Name": { "type": "string", "minLength": 1, "maxLength": 256 },
+    "Description": { "type": "string", "minLength": 1 },
+    "DateTime": { "type": "string", "format": "date-time" },
+
+    "Expression": {
+      "description": "Implementation-independent logical or semantic expression: human-readable text or a structured expression tree.",
+      "oneOf": [
+        { "type": "string", "minLength": 1 },
+        { "$ref": "#/$defs/ExpressionNode" }
+      ]
+    },
+    "ExpressionNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["operator"],
+      "properties": {
+        "operator": { "type": "string", "minLength": 1 },
+        "arguments": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              { "$ref": "#/$defs/ExpressionNode" },
+              { "$ref": "#/$defs/LiteralValue" },
+              { "$ref": "#/$defs/ReferenceValue" }
+            ]
+          },
+          "default": []
+        }
+      }
+    },
+    "LiteralValue": { "type": ["string", "number", "integer", "boolean", "null"] },
+    "ReferenceValue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ref"],
+      "properties": { "ref": { "$ref": "#/$defs/SemanticRef" } }
+    },
+
+    "ContentHash": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._-]+:[A-Fa-f0-9]+$",
+      "description": "Content-addressed digest including its algorithm, for example sha256:<hex>."
+    },
+    "StratumName": {
+      "enum": ["source", "semantic", "cognitive", "materialization"]
+    },
+    "StratumBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stratum", "version", "contentHash"],
+      "properties": {
+        "stratum": { "$ref": "#/$defs/StratumName" },
+        "version": { "type": "string", "minLength": 1 },
+        "contentHash": { "$ref": "#/$defs/ContentHash" }
+      },
+      "description": "An exact, immutable binding to one version and digest of a stratum."
+    },
+    "StratumStatus": {
+      "enum": [
+        "unstarted",
+        "capturing", "captured",
+        "formalizing", "formalized",
+        "cognifying", "cognified",
+        "codifying", "materialized",
+        "returned", "failed", "stale", "retired"
+      ]
+    },
+    "StratumRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ownerRole", "version", "contentHash", "status", "sections", "validatorRefs"],
+      "properties": {
+        "ownerRole": { "enum": ["source-authority", "formalizer", "cognifier", "codifier"] },
+        "ownerRef": { "$ref": "#/$defs/SemanticRef" },
+        "version": { "type": "string", "minLength": 1 },
+        "contentHash": { "$ref": "#/$defs/ContentHash" },
+        "status": { "$ref": "#/$defs/StratumStatus" },
+        "sections": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 1,
+          "uniqueItems": true,
+          "description": "Top-level graph domains governed by this stratum. Cross-stratum overlap is a semantic validation error."
+        },
+        "validatorRefs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "basedOn": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/StratumBinding" },
+          "uniqueItems": true,
+          "default": []
+        }
+      }
+    },
+    "StrataManifest": {
+      "description": "Ownership and version boundaries for source, semantic, cognitive, and materialization content. These strata are orthogonal to the speech act sequence, not substitutes for its distinct obligations.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "semantic", "cognitive", "materialization"],
+      "properties": {
+        "source": {
+          "allOf": [
+            { "$ref": "#/$defs/StratumRecord" },
+            { "properties": { "ownerRole": { "const": "source-authority" } } }
+          ]
+        },
+        "semantic": {
+          "allOf": [
+            { "$ref": "#/$defs/StratumRecord" },
+            { "properties": { "ownerRole": { "const": "formalizer" } } }
+          ]
+        },
+        "cognitive": {
+          "allOf": [
+            { "$ref": "#/$defs/StratumRecord" },
+            { "properties": { "ownerRole": { "const": "cognifier" } } }
+          ]
+        },
+        "materialization": {
+          "allOf": [
+            { "$ref": "#/$defs/StratumRecord" },
+            { "properties": { "ownerRole": { "const": "codifier" } } }
+          ]
+        }
+      }
+    },
+
+    "AssessmentState": {
+      "enum": ["not-assessed", "satisfied", "unsatisfied", "waived"]
+    },
+    "ReadinessKind": {
+      "enum": ["bounded", "formalizable", "cognifiable", "codifiable"]
+    },
+    "ReadinessFinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code"],
+      "properties": {
+        "code": { "type": "string", "minLength": 1 },
+        "refs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "uniqueItems": true,
+          "default": []
+        },
+        "detail": { "$ref": "#/$defs/Description" }
+      }
+    },
+    "ReadinessAssessment": {
+      "description": "An assessment of closure and upstream adequacy for a bound stratum. Readiness does not record an accountable delivery commitment, Directive issuance, or execution authorization.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "subject", "internalClosure", "externalAdequacy", "ready", "blocking", "advisory", "validatorRefs"],
+      "properties": {
+        "id": { "$ref": "#/$defs/SemanticId" },
+        "kind": { "$ref": "#/$defs/ReadinessKind" },
+        "subject": { "$ref": "#/$defs/StratumBinding" },
+        "policyRef": { "$ref": "#/$defs/SemanticRef" },
+        "internalClosure": {
+          "$ref": "#/$defs/AssessmentState",
+          "description": "Whether the subject is internally coherent, resolved, and valid on its own terms."
+        },
+        "externalAdequacy": {
+          "$ref": "#/$defs/AssessmentState",
+          "description": "Whether the subject remains faithful and sufficient to its authoritative upstream want or contract."
+        },
+        "ready": {
+          "type": "boolean",
+          "description": "True only when both assessments are satisfied or visibly waived and no blocking finding remains."
+        },
+        "blocking": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ReadinessFinding" },
+          "default": []
+        },
+        "advisory": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ReadinessFinding" },
+          "default": []
+        },
+        "validatorRefs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "evaluatedAt": { "$ref": "#/$defs/DateTime" },
+        "evaluatedByRef": { "$ref": "#/$defs/SemanticRef" },
+        "notes": { "$ref": "#/$defs/Description" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "ready": { "const": true } }, "required": ["ready"] },
+          "then": {
+            "properties": {
+              "blocking": { "maxItems": 0 },
+              "internalClosure": { "enum": ["satisfied", "waived"] },
+              "externalAdequacy": { "enum": ["satisfied", "waived"] }
+            }
+          }
+        }
+      ]
+    },
+
+    "Ratification": {
+      "description": "Source-authority confirmation of an exact stratum version and hash. Ratifying meaning or design does not make a Commissive to deliver it.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "subject", "byRef", "method", "confirmationRefs", "at"],
+      "properties": {
+        "id": { "$ref": "#/$defs/SemanticId" },
+        "subject": { "$ref": "#/$defs/StratumBinding" },
+        "byRef": { "$ref": "#/$defs/SemanticRef" },
+        "method": { "$ref": "#/$defs/Name" },
+        "confirmationRefs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "minItems": 1,
+          "uniqueItems": true,
+          "description": "Recorded confirmations from the source authority on which this ratification rests."
+        },
+        "at": { "$ref": "#/$defs/DateTime" },
+        "notes": { "$ref": "#/$defs/Description" }
+      }
+    },
+
+    "HandoffStatus": {
+      "enum": ["pending", "accepted", "returned", "failed", "stale"]
+    },
+    "Handoff": {
+      "description": "Transfer of an exact bound output between stratum owners. Acceptance establishes the recorded handoff, not delivery commitment, committer authorship of Directives, or execution authorization.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["input", "output", "status"],
+      "properties": {
+        "input": { "$ref": "#/$defs/StratumBinding" },
+        "output": { "$ref": "#/$defs/StratumBinding" },
+        "status": { "$ref": "#/$defs/HandoffStatus" },
+        "readinessRef": {
+          "$ref": "#/$defs/SemanticRef",
+          "description": "The ReadinessAssessment that licensed acceptance of the output."
+        },
+        "ratificationRefs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "uniqueItems": true,
+          "default": []
+        },
+        "revisionRequestRefs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "uniqueItems": true,
+          "default": []
+        },
+        "acceptedAt": { "$ref": "#/$defs/DateTime" },
+        "notes": { "$ref": "#/$defs/Description" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "accepted" } }, "required": ["status"] },
+          "then": { "required": ["readinessRef"] }
+        }
+      ]
+    },
+    "HandoffModel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["formalization", "cognification"],
+      "properties": {
+        "formalization": { "$ref": "#/$defs/FormalizationHandoff" },
+        "cognification": { "$ref": "#/$defs/CognificationHandoff" },
+        "codification": { "$ref": "#/$defs/CodificationHandoff" }
+      }
+    },
+    "FormalizationHandoff": {
+      "allOf": [
+        { "$ref": "#/$defs/Handoff" },
+        {
+          "properties": {
+            "input": { "properties": { "stratum": { "const": "source" } } },
+            "output": { "properties": { "stratum": { "const": "semantic" } } }
+          }
+        }
+      ]
+    },
+    "CognificationHandoff": {
+      "allOf": [
+        { "$ref": "#/$defs/Handoff" },
+        {
+          "properties": {
+            "input": { "properties": { "stratum": { "const": "semantic" } } },
+            "output": { "properties": { "stratum": { "const": "cognitive" } } }
+          }
+        }
+      ]
+    },
+    "CodificationHandoff": {
+      "allOf": [
+        { "$ref": "#/$defs/Handoff" },
+        {
+          "properties": {
+            "input": { "properties": { "stratum": { "const": "cognitive" } } },
+            "output": { "properties": { "stratum": { "const": "materialization" } } }
+          }
+        }
+      ]
+    },
+
+    "Meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "version", "irVersion", "stage", "status"],
+      "properties": {
+        "id": { "$ref": "#/$defs/SemanticId" },
+        "name": { "$ref": "#/$defs/Name" },
+        "description": { "$ref": "#/$defs/Description" },
+        "version": { "type": "string", "minLength": 1 },
+        "irVersion": { "const": "0.3" },
+        "stage": {
+          "enum": [
+            "conception", "conceptualization", "formalization", "cognification",
+            "codification", "compilation", "computation"
+          ],
+          "description": "Advisory summary: the most advanced materialization stage whose stratum has been accepted. Authoritative statuses live on strata; readiness lives in readiness[]."
+        },
+        "status": { "enum": ["draft", "active", "retired"] },
+        "createdAt": { "$ref": "#/$defs/DateTime" },
+        "updatedAt": { "$ref": "#/$defs/DateTime" },
+        "namespaces": {
+          "type": "object",
+          "additionalProperties": { "type": "string", "format": "uri" },
+          "default": {}
+        },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true,
+          "default": []
+        }
+      }
+    },
+
+    "Conception": {
+      "description": "Source record preserving the original Expressive Want and its motivating and desired difference. Expression and later interpretation remain distinct; completion must be checked against this original Want.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["expression"],
+      "properties": {
+        "expression": { "$ref": "#/$defs/Description" },
+        "motivatingState": { "$ref": "#/$defs/Description" },
+        "desiredDifference": { "$ref": "#/$defs/Description" },
+        "notions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Name" },
+          "uniqueItems": true,
+          "default": []
+        },
+        "sourceRefs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "uniqueItems": true,
+          "default": []
+        }
+      }
+    },
+    "Conceptualization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["statements"],
+      "properties": {
+        "statements": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ConceptualStatement" },
+          "minItems": 1
+        },
+        "boundaries": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Description" },
+          "default": []
+        },
+        "roughPlans": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Description" },
+          "default": []
+        },
+        "openQuestionRefs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "uniqueItems": true,
+          "default": []
+        }
+      },
+      "description": "The source-facing interpretation produced from conception before the Formalizer authors the semantic contract. Supports Assertive clarification of current and wanted states; confirmed readings, evidence, assumptions, and unknowns must remain distinguishable."
+    },
+    "ConceptualStatement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "statement", "disposition", "sourceRefs", "authoredByRef"],
+      "properties": {
+        "id": { "$ref": "#/$defs/SemanticId" },
+        "statement": { "$ref": "#/$defs/Description" },
+        "disposition": {
+          "enum": ["proposed", "confirmed", "assumed", "withdrawn", "contested"],
+          "description": "unasked is not a disposition; it is a computed intake signal owned by the front door."
+        },
+        "sourceRefs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "authoredByRef": { "$ref": "#/$defs/SemanticRef" },
+        "confirmationRefs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "uniqueItems": true,
+          "default": []
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "disposition": { "const": "confirmed" } }, "required": ["disposition"] },
+          "then": {
+            "required": ["confirmationRefs"],
+            "properties": { "confirmationRefs": { "minItems": 1 } }
+          }
+        }
+      ]
+    },
+
+    "Intent": {
+      "description": "Declarative required states and changes bridging the evidenced current/wanted gap. Specifies what must become true without prescribing a mechanism or asserting that the wanted state already holds.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["goals"],
+      "properties": {
+        "actors": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ActorRole" },
+          "default": []
+        },
+        "goals": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/Goal" }
+        },
+        "desiredStates": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/DesiredState" },
+          "default": []
+        },
+        "desiredChanges": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/DesiredChange" },
+          "default": []
+        },
+        "preferences": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Preference" },
+          "default": []
+        }
+      }
+    },
+    "ActorRole": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["actorRef", "role"],
+      "properties": {
+        "actorRef": { "$ref": "#/$defs/SemanticRef" },
+        "role": { "$ref": "#/$defs/Name" }
+      }
+    },
+    "Goal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "statement"],
+      "properties": {
+        "id": { "$ref": "#/$defs/SemanticId" },
+        "statement": { "$ref": "#/$defs/Description" },
+        "priority": { "type": "integer", "minimum": 0, "default": 0 },
+        "successCriteriaRefs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "uniqueItems": true,
+          "default": []
+        },
+        "constraintRefs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "uniqueItems": true,
+          "default": []
+        }
+      }
+    },
+    "DesiredState": {
+      "description": "A Declarative required state whose realization supports the original Want; its specification is not evidence that it currently holds.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "subject", "predicate", "value"],
+      "properties": {
+        "id": { "$ref": "#/$defs/SemanticId" },
+        "subject": { "$ref": "#/$defs/SemanticRef" },
+        "predicate": { "$ref": "#/$defs/Name" },
+        "value": {}
+      }
+    },
+    "DesiredChange": {
+      "description": "A Declarative required difference between current and wanted states, independent of the instructions and operations selected to produce it.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "to"],
+      "properties": {
+        "id": { "$ref": "#/$defs/SemanticId" },
+        "from": {},
+        "to": {},
+        "subjectRef": { "$ref": "#/$defs/SemanticRef" }
+      }
+    },
+    "Preference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "objective"],
+      "properties": {
+        "id": { "$ref": "#/$defs/SemanticId" },
+        "objective": { "$ref": "#/$defs/Description" },
+        "weight": { "type": "number", "minimum": 0, "default": 1 },
+        "direction": { "enum": ["maximize", "minimize", "target", "prefer"] }
+      }
+    },
+
+    "Frame": {
+      "description": "Context within which Assertive readings and Declarative obligations hold; retain these limits when designing work and evaluating fulfillment.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["statement"],
+      "properties": {
+        "statement": { "$ref": "#/$defs/Description" },
+        "inScope": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Description" },
+          "default": []
+        },
+        "outOfScope": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Description" },
+          "default": []
+        },
+        "contextRefs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "uniqueItems": true,
+          "default": []
+        }
+      }
+    },
+    "Assumption": {
+      "description": "An explicit unverified premise in the account of reality or wanted state. Do not treat it as an evidenced Assertive merely because it appears in the contract.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "statement", "status"],
+      "properties": {
+        "id": { "$ref": "#/$defs/SemanticId" },
+        "statement": { "$ref": "#/$defs/Description" },
+        "status": { "enum": ["unverified", "verified", "rejected", "tolerated"] },
+        "impact": { "$ref": "#/$defs/Description" },
+        "evidenceContractRefs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "uniqueItems": true,
+          "default": []
+        }
+      }
+    },
+    "UnresolvedQuestion": {
+      "description": "An explicit gap or uncertainty in understanding current reality, the wanted state, or the required difference; unresolved content is not established truth.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "question"],
+      "properties": {
+        "id": { "$ref": "#/$defs/SemanticId" },
+        "question": { "$ref": "#/$defs/Description" },
+        "impact": { "$ref": "#/$defs/Description" },
+        "blocking": { "type": "boolean", "default": false },
+        "resolutionRefs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "default": []
+        }
+      }
+    },
+
+    "Ontology": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["entities", "verbs", "relations"],
+      "properties": {
+        "entities": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/EntityType" },
+          "default": []
+        },
+        "verbs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Verb" },
+          "default": []
+        },
+        "relations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Relation" },
+          "default": []
+        },
+        "types": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ValueType" },
+          "default": []
+        },
+        "invariants": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Invariant" },
+          "default": []
+        }
+      }
+    },
+    "EntityType": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name"],
+      "properties": {
+        "id": { "$ref": "#/$defs/SemanticId" },
+        "name": { "$ref": "#/$defs/Name" },
+        "description": { "$ref": "#/$defs/Description" },
+        "abstract": { "type": "boolean", "default": false },
+        "extends": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "uniqueItems": true,
+          "default": []
+        },
+        "properties": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/PropertyDefinition" },
+          "default": []
+        }
+      }
+    },
+    "PropertyDefinition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "type"],
+      "properties": {
+        "name": { "$ref": "#/$defs/Name" },
+        "type": { "$ref": "#/$defs/TypeExpression" },
+        "required": { "type": "boolean", "default": false },
+        "description": { "$ref": "#/$defs/Description" },
+        "default": {}
+      }
+    },
+    "ValueType": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name"],
+      "properties": {
+        "id": { "$ref": "#/$defs/SemanticId" },
+        "name": { "$ref": "#/$defs/Name" },
+        "base": {
+          "enum": ["string", "number", "integer", "boolean", "datetime", "duration", "identifier", "object", "array", "enum", "any"]
+        },
+        "enum": { "type": "array", "items": {}, "uniqueItems": true },
+        "description": { "$ref": "#/$defs/Description" }
+      }
+    },
+    "TypeExpression": {
+      "oneOf": [
+        { "enum": ["string", "number", "integer", "boolean", "datetime", "duration", "identifier", "object", "array", "any"] },
+        { "$ref": "#/$defs/SemanticRef" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["collection", "of"],
+          "properties": {
+            "collection": { "enum": ["array", "set"] },
+            "of": { "$ref": "#/$defs/TypeExpression" }
+          }
+        }
+      ]
+    },
+    "Verb": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name"],
+      "properties": {
+        "id": { "$ref": "#/$defs/SemanticId" },
+        "name": { "$ref": "#/$defs/Name" },
+        "description": { "$ref": "#/$defs/Description" },
+        "subjectTypeRef": { "$ref": "#/$defs/SemanticRef" },
+        "objectTypeRef": { "$ref": "#/$defs/SemanticRef" },
+        "inputTypeRefs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "default": []
+        },
+        "outputTypeRefs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "default": []
+        },
+        "preconditions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Expression" },
+          "default": []
+        },
+        "effects": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/StateEffect" },
+          "default": []
+        }
+      }
+    },
+    "Relation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "fromTypeRef", "toTypeRef"],
+      "properties": {
+        "id": { "$ref": "#/$defs/SemanticId" },
+        "name": { "$ref": "#/$defs/Name" },
+        "fromTypeRef": { "$ref": "#/$defs/SemanticRef" },
+        "toTypeRef": { "$ref": "#/$defs/SemanticRef" },
+        "cardinality": { "enum": ["one-to-one", "one-to-many", "many-to-one", "many-to-many"] },
+        "inverseRef": { "$ref": "#/$defs/SemanticRef" },
+        "description": { "$ref": "#/$defs/Description" }
+      }
+    },
+    "Invariant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "condition"],
+      "properties": {
+        "id": { "$ref": "#/$defs/SemanticId" },
+        "description": { "$ref": "#/$defs/Description" },
+        "condition": { "$ref": "#/$defs/Expression" },
+        "severity": { "enum": ["error", "warning", "advisory"], "default": "error" }
+      }
+    },
+
+    "EpistemicState": {
+      "enum": ["KNOWN", "KNOWN_ABSENT", "UNKNOWN", "AMBIGUOUS"]
+    },
+    "AcquisitionStatus": {
+      "enum": ["NOT_QUERIED", "ACQUIRED", "UNAVAILABLE", "TOOL_FAILED", "OBSERVATION_FAILED", "NOT_APPLICABLE"]
+    },
+    "StateModel": {
+      "description": "Implementation-independent state meanings and variables with epistemic and acquisition distinctions. State definitions support Assertive accounts but are not observations; wanted states remain intended until evidence establishes realization.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "meanings": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/StateMeaning" },
+          "default": []
+        },
+        "variables": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/StateVariable" },
+          "default": []
+        },
+        "epistemicStates": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/EpistemicState" },
+          "uniqueItems": true,
+          "default": ["KNOWN", "KNOWN_ABSENT", "UNKNOWN", "AMBIGUOUS"]
+        },
+        "acquisitionStates": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/AcquisitionStatus" },
+          "uniqueItems": true,
+          "default": ["NOT_QUERIED", "ACQUIRED", "UNAVAILABLE", "TOOL_FAILED", "OBSERVATION_FAILED", "NOT_APPLICABLE"]
+        }
+      }
+    },
+    "StateMeaning": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "meaning"],
+      "properties": {
+        "id": { "$ref": "#/$defs/SemanticId" },
+        "name": { "$ref": "#/$defs/Name" },
+        "meaning": { "$ref": "#/$defs/Description" },
+        "invariantRefs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "uniqueItems": true,
+          "default": []
+        }
+      }
+    },
+    "StateVariable": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "type"],
+      "properties": {
+        "id": { "$ref": "#/$defs/SemanticId" },
+        "name": { "$ref": "#/$defs/Name" },
+        "type": { "$ref": "#/$defs/TypeExpression" },
+        "initial": {}
+      }
+    },
+    "StateEffect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["targetRef", "operation"],
+      "properties": {
+        "targetRef": { "$ref": "#/$defs/SemanticRef" },
+        "operation": { "enum": ["set", "add", "remove", "create", "delete", "transition", "emit"] },
+        "value": {},
+        "condition": { "$ref": "#/$defs/Expression" }
+      }
+    },
+
+    "Constraint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "rule"],
+      "properties": {
+        "id": { "$ref": "#/$defs/SemanticId" },
+        "name": { "$ref": "#/$defs/Name" },
+        "kind": { "enum": ["hard", "soft"] },
+        "rule": { "$ref": "#/$defs/Expression" },
+        "weight": { "type": "number", "minimum": 0 },
+        "scopeRefs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "default": []
+        },
+        "description": { "$ref": "#/$defs/Description" }
+      }
+    },
+    "Policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "rules"],
+      "properties": {
+        "id": { "$ref": "#/$defs/SemanticId" },
+        "name": { "$ref": "#/$defs/Name" },
+        "description": { "$ref": "#/$defs/Description" },
+        "rules": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/PolicyRule" },
+          "minItems": 1
+        }
+      }
+    },
+    "PolicyRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "when", "then"],
+      "properties": {
+        "id": { "$ref": "#/$defs/SemanticId" },
+        "when": { "$ref": "#/$defs/Expression" },
+        "then": { "$ref": "#/$defs/Expression" },
+        "priority": { "type": "integer", "default": 0 }
+      }
+    },
+
+    "EvidenceModel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contracts"],
+      "properties": {
+        "contracts": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/EvidenceContract" },
+          "default": []
+        },
+        "epistemicStates": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/EpistemicState" },
+          "uniqueItems": true,
+          "default": ["KNOWN", "KNOWN_ABSENT", "UNKNOWN", "AMBIGUOUS"]
+        },
+        "acquisitionStates": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/AcquisitionStatus" },
+          "uniqueItems": true,
+          "default": ["NOT_QUERIED", "ACQUIRED", "UNAVAILABLE", "TOOL_FAILED", "OBSERVATION_FAILED", "NOT_APPLICABLE"]
+        }
+      }
+    },
+    "EvidenceContract": {
+      "description": "Declarative conditions on the observations needed to establish a claim. Defining this contract does not acquire evidence; acquisition choices belong to the cognitive observation plan.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "claim", "requirements"],
+      "properties": {
+        "id": { "$ref": "#/$defs/SemanticId" },
+        "name": { "$ref": "#/$defs/Name" },
+        "claim": { "$ref": "#/$defs/Description" },
+        "requirements": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/EvidenceRequirement" },
+          "minItems": 1
+        },
+        "aggregate": { "enum": ["all", "any", "threshold"], "default": "all" },
+        "threshold": { "type": "number", "minimum": 0 },
+        "expiresAfter": { "type": "string", "description": "ISO 8601 duration where applicable." }
+      }
+    },
+    "EvidenceRequirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "condition"],
+      "properties": {
+        "id": { "$ref": "#/$defs/SemanticId" },
+        "condition": {
+          "$ref": "#/$defs/Expression",
+          "description": "The observation property required to establish the claim, independent of how it will be acquired. A planned source or tool belongs in observationPlan."
+        },
+        "requiredConfidence": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "SatisfactionCase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "successCriterionRefs", "warrant", "evidenceContractRefs", "independenceRequirement"],
+      "properties": {
+        "id": { "$ref": "#/$defs/SemanticId" },
+        "name": { "$ref": "#/$defs/Name" },
+        "successCriterionRefs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "minItems": 1,
+          "uniqueItems": true,
+          "description": "References the success claims argued by this case rather than duplicating their text."
+        },
+        "warrant": { "$ref": "#/$defs/Warrant" },
+        "evidenceContractRefs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "independenceRequirement": {
+          "enum": ["self-permitted", "policy-dependent", "independent-required", "dual-review-required"],
+          "description": "The minimum independence needed before the case may establish its referenced claims."
+        },
+        "frameRefs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "uniqueItems": true,
+          "default": [],
+          "description": "Frames within which the warrant is asserted to hold."
+        },
+        "defeaterRefs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "uniqueItems": true,
+          "default": [],
+          "description": "Known conditions that defeat or suspend the inference even when observations are acquired."
+        }
+      },
+      "description": "A semantic argument connecting referenced Declarative success claims to required evidence through an explicit warrant. Establishing these claims must support verification against the original Expressive Want, rather than redefine it around available outputs."
+    },
+    "Warrant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rule", "mode"],
+      "properties": {
+        "rule": {
+          "$ref": "#/$defs/Expression",
+          "description": "The inference rule explaining why satisfying the evidence contracts establishes the referenced success claims within the declared frame."
+        },
+        "mode": {
+          "enum": ["executable", "reviewed", "hybrid"],
+          "description": "Whether establishment is computed, judged through recorded review, or combines both."
+        },
+        "evaluatorRef": {
+          "$ref": "#/$defs/SemanticRef",
+          "description": "Optional reference to a semantic evaluator definition. Its concrete implementation binding belongs to the materialization stratum."
+        },
+        "assumptionRefs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "uniqueItems": true,
+          "default": []
+        },
+        "reviewPolicyRef": { "$ref": "#/$defs/SemanticRef" }
+      }
+    },
+    "EvidenceRecord": {
+      "description": "An observation attempt and its epistemic/acquisition status, source, observer, and provenance. Supports evidenced Assertives and runtime verification of required truths; acquisition or confidence alone does not establish fulfillment.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "contractRef", "observerRef", "epistemicState", "acquisitionStatus"],
+      "properties": {
+        "id": { "$ref": "#/$defs/SemanticId" },
+        "contractRef": { "$ref": "#/$defs/SemanticRef" },
+        "observerRef": {
+          "$ref": "#/$defs/SemanticRef",
+          "description": "Who made the observation. Required so that independence is computable after the fact."
+        },
+        "independence": { "enum": ["independent", "self-reported", "not-applicable"] },
+        "sourceRef": { "$ref": "#/$defs/SemanticRef" },
+        "attemptedAt": { "$ref": "#/$defs/DateTime" },
+        "observedAt": { "$ref": "#/$defs/DateTime" },
+        "epistemicState": { "$ref": "#/$defs/EpistemicState" },
+        "acquisitionStatus": { "$ref": "#/$defs/AcquisitionStatus" },
+        "value": {},
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "provenanceRef": { "$ref": "#/$defs/SemanticRef" }
+      }
+    },
+
+    "SuccessModel": {
+      "description": "Declarative acceptance conditions for the original Want. Completion requires evidence establishing the applicable claims, not merely successful execution or procedure termination.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["criteria", "aggregate"],
+      "properties": {
+        "criteria": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SuccessCriterion" },
+          "minItems": 1
+        },
+        "aggregate": { "$ref": "#/$defs/SuccessAggregation" }
+      }
+    },
+    "SuccessCriterion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "condition"],
+      "properties": {
+        "id": { "$ref": "#/$defs/SemanticId" },
+        "name": { "$ref": "#/$defs/Name" },
+        "description": { "$ref": "#/$defs/Description" },
+        "claim": {
+          "$ref": "#/$defs/Description",
+          "description": "Human-readable success claim whose truth the condition and evidence contracts must establish."
+        },
+        "condition": { "$ref": "#/$defs/Expression" },
+        "evidenceContractRefs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "uniqueItems": true,
+          "default": []
+        },
+        "required": { "type": "boolean", "default": true },
+        "weight": { "type": "number", "minimum": 0, "default": 1 }
+      }
+    },
+    "SuccessAggregation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["operator", "criterionRefs"],
+      "properties": {
+        "operator": { "enum": ["all", "any", "threshold", "weighted"] },
+        "criterionRefs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "threshold": { "type": "number" }
+      }
+    },
+
+    "MechanismModel": {
+      "description": "Candidate and selected mechanisms for delivering and observing the Declarative obligations. Selection alone is neither a Commissive nor issuance of a Directive.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidates"],
+      "properties": {
+        "candidates": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Mechanism" },
+          "minItems": 1
+        },
+        "selectedRef": { "$ref": "#/$defs/SemanticRef" }
+      }
+    },
+    "Mechanism": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "status"],
+      "properties": {
+        "id": { "$ref": "#/$defs/SemanticId" },
+        "name": { "$ref": "#/$defs/Name" },
+        "description": { "$ref": "#/$defs/Description" },
+        "status": { "enum": ["candidate", "selected", "rejected"] },
+        "architectureRef": { "$ref": "#/$defs/SemanticRef" },
+        "procedureRefs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "uniqueItems": true,
+          "default": []
+        },
+        "capabilityRefs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "uniqueItems": true,
+          "default": []
+        },
+        "dependencyRefs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "uniqueItems": true,
+          "default": []
+        },
+        "failureTypeRefs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "uniqueItems": true,
+          "default": []
+        },
+        "decisionRefs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "uniqueItems": true,
+          "default": [],
+          "description": "Decision records carrying the selection or rejection rationale."
+        }
+      }
+    },
+    "Architecture": {
+      "description": "Cognitive design of the work needed to realize the semantic contract. It can underlie Directives issued after commitment by the committer through the Cognifier role; this schema does not record or enforce that issuance or authorship.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "components"],
+      "properties": {
+        "id": { "$ref": "#/$defs/SemanticId" },
+        "name": { "$ref": "#/$defs/Name" },
+        "description": { "$ref": "#/$defs/Description" },
+        "components": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ArchitectureComponent" },
+          "default": []
+        },
+        "interactions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ArchitectureInteraction" },
+          "default": []
+        }
+      }
+    },
+    "ArchitectureComponent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "responsibility"],
+      "properties": {
+        "id": { "$ref": "#/$defs/SemanticId" },
+        "name": { "$ref": "#/$defs/Name" },
+        "responsibility": { "$ref": "#/$defs/Description" },
+        "capabilityRefs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "uniqueItems": true,
+          "default": []
+        },
+        "dependencyRefs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "uniqueItems": true,
+          "default": []
+        }
+      }
+    },
+    "ArchitectureInteraction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fromRef", "toRef", "description"],
+      "properties": {
+        "fromRef": { "$ref": "#/$defs/SemanticRef" },
+        "toRef": { "$ref": "#/$defs/SemanticRef" },
+        "description": { "$ref": "#/$defs/Description" }
+      }
+    },
+    "Capability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "kind"],
+      "properties": {
+        "id": { "$ref": "#/$defs/SemanticId" },
+        "name": { "$ref": "#/$defs/Name" },
+        "description": { "$ref": "#/$defs/Description" },
+        "kind": { "enum": ["observe", "act", "transform", "reason", "communicate", "persist", "compute"] },
+        "verbRef": { "$ref": "#/$defs/SemanticRef" },
+        "inputs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Port" },
+          "default": []
+        },
+        "outputs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Port" },
+          "default": []
+        },
+        "preconditions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Expression" },
+          "default": []
+        },
+        "effects": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/StateEffect" },
+          "default": []
+        },
+        "constraintRefs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "uniqueItems": true,
+          "default": []
+        }
+      },
+      "description": "A realization capability: an implementation-independent ability selected by the Cognifier. Evidence requirements map to capabilities through observationPlan; concrete providers bind in implementation.bindings."
+    },
+    "Port": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "type"],
+      "properties": {
+        "name": { "$ref": "#/$defs/Name" },
+        "type": { "$ref": "#/$defs/TypeExpression" },
+        "required": { "type": "boolean", "default": true }
+      }
+    },
+    "Procedure": {
+      "description": "Cognitive work design with dependencies, conditions, and success references. An issued Directive must be authored by the accountable committer after a separate delivery commitment; a procedure record alone proves neither. Its materialization supplies Imperatives whose effects must establish the required truths.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "nodes", "entryNodeRefs"],
+      "properties": {
+        "id": { "$ref": "#/$defs/SemanticId" },
+        "name": { "$ref": "#/$defs/Name" },
+        "description": { "$ref": "#/$defs/Description" },
+        "intentRefs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "uniqueItems": true,
+          "default": []
+        },
+        "inputs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Port" },
+          "default": []
+        },
+        "outputs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Port" },
+          "default": []
+        },
+        "preconditions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Expression" },
+          "default": []
+        },
+        "nodes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ProcedureNode" },
+          "minItems": 1
+        },
+        "edges": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ProcedureEdge" },
+          "default": []
+        },
+        "entryNodeRefs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "minItems": 1
+        },
+        "exitNodeRefs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "default": []
+        },
+        "postconditions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Expression" },
+          "default": []
+        },
+        "successCriteriaRefs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "uniqueItems": true,
+          "default": []
+        }
+      }
+    },
+    "ProcedureNode": {
+      "description": "An implementation-independent work step within a cognitive procedure. Concrete bindings realize its Imperatives; executing a step does not itself establish the procedure postconditions or original Want.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind"],
+      "properties": {
+        "id": { "$ref": "#/$defs/SemanticId" },
+        "name": { "$ref": "#/$defs/Name" },
+        "kind": {
+          "enum": ["action", "observation", "decision", "transform", "procedure", "parallel", "join", "wait", "emit", "terminate"]
+        },
+        "verbRef": { "$ref": "#/$defs/SemanticRef" },
+        "capabilityRef": { "$ref": "#/$defs/SemanticRef" },
+        "procedureRef": { "$ref": "#/$defs/SemanticRef" },
+        "inputs": { "type": "object", "additionalProperties": {} },
+        "outputs": { "type": "object", "additionalProperties": { "$ref": "#/$defs/SemanticRef" } },
+        "condition": { "$ref": "#/$defs/Expression" },
+        "preconditions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Expression" },
+          "default": []
+        },
+        "postconditions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Expression" },
+          "default": []
+        },
+        "policyRefs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "uniqueItems": true,
+          "default": []
+        },
+        "failurePolicyRef": { "$ref": "#/$defs/SemanticRef" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "kind": { "enum": ["action", "observation"] } }, "required": ["kind"] },
+          "then": { "anyOf": [ { "required": ["capabilityRef"] }, { "required": ["verbRef"] } ] }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "procedure" } }, "required": ["kind"] },
+          "then": { "required": ["procedureRef"] }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "decision" } }, "required": ["kind"] },
+          "then": { "required": ["condition"] }
+        }
+      ]
+    },
+    "ProcedureEdge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fromRef", "toRef"],
+      "properties": {
+        "fromRef": { "$ref": "#/$defs/SemanticRef" },
+        "toRef": { "$ref": "#/$defs/SemanticRef" },
+        "condition": { "$ref": "#/$defs/Expression" },
+        "label": { "$ref": "#/$defs/Name" }
+      }
+    },
+    "Dependency": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "kind"],
+      "properties": {
+        "id": { "$ref": "#/$defs/SemanticId" },
+        "name": { "$ref": "#/$defs/Name" },
+        "kind": { "enum": ["semantic", "capability", "system", "data", "human", "runtime", "external"] },
+        "description": { "$ref": "#/$defs/Description" },
+        "required": { "type": "boolean", "default": true },
+        "satisfiedByRef": { "$ref": "#/$defs/SemanticRef" }
+      }
+    },
+    "FailureModel": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "types": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/FailureType" },
+          "default": []
+        },
+        "policies": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/FailurePolicy" },
+          "default": []
+        }
+      }
+    },
+    "FailureType": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "originLayer"],
+      "properties": {
+        "id": { "$ref": "#/$defs/SemanticId" },
+        "name": { "$ref": "#/$defs/Name" },
+        "originLayer": {
+          "enum": ["conception", "conceptualization", "formalization", "cognification", "codification", "compilation", "computation", "observation"]
+        },
+        "description": { "$ref": "#/$defs/Description" }
+      }
+    },
+    "FailurePolicy": {
+      "description": "Defined retry, compensation, escalation, or re-entry behavior for failed work or missing evidence. A failed check must not count as fulfillment or silently relax the original Want. Probabilistic parts remain subject to these explicit process contracts and acceptance checks.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "onFailureTypeRef", "action"],
+      "properties": {
+        "id": { "$ref": "#/$defs/SemanticId" },
+        "onFailureTypeRef": { "$ref": "#/$defs/SemanticRef" },
+        "action": {
+          "enum": [
+            "retry", "abort", "compensate", "escalate",
+            "return-to-conceptualization", "return-to-formalization", "return-to-cognification",
+            "request-evidence", "remain-incomplete"
+          ]
+        },
+        "maxAttempts": { "type": "integer", "minimum": 0 },
+        "escalationCapabilityRef": { "$ref": "#/$defs/SemanticRef" }
+      }
+    },
+    "ObservationPlan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mechanisms"],
+      "properties": {
+        "mechanisms": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ObservationMechanism" },
+          "default": []
+        }
+      },
+      "description": "Cognitive choices for acquiring observations in proposed work or issued Directives. Evidence requirements remain Declarative semantic obligations; a plan is not acquired evidence, a delivery commitment, or proof of Directive authorship."
+    },
+    "ObservationMechanism": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "evidenceRequirementRefs", "capabilityRef"],
+      "properties": {
+        "id": { "$ref": "#/$defs/SemanticId" },
+        "name": { "$ref": "#/$defs/Name" },
+        "evidenceRequirementRefs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "capabilityRef": { "$ref": "#/$defs/SemanticRef" },
+        "procedureNodeRef": { "$ref": "#/$defs/SemanticRef" },
+        "observerRef": { "$ref": "#/$defs/SemanticRef" },
+        "independence": { "enum": ["independent", "self-reported", "not-applicable"] },
+        "failureTypeRefs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "uniqueItems": true,
+          "default": []
+        }
+      }
+    },
+    "SatisfactionMapping": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "goalRef", "successCriterionRefs", "mechanismRef"],
+      "properties": {
+        "id": { "$ref": "#/$defs/SemanticId" },
+        "goalRef": { "$ref": "#/$defs/SemanticRef" },
+        "successCriterionRefs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "mechanismRef": { "$ref": "#/$defs/SemanticRef" },
+        "procedureRefs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "uniqueItems": true,
+          "default": []
+        },
+        "rationale": { "$ref": "#/$defs/Description" }
+      }
+    },
+
+    "TestScenario": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "given", "expect"],
+      "properties": {
+        "id": { "$ref": "#/$defs/SemanticId" },
+        "name": { "$ref": "#/$defs/Name" },
+        "description": { "$ref": "#/$defs/Description" },
+        "procedureRef": { "$ref": "#/$defs/SemanticRef" },
+        "given": {},
+        "when": { "$ref": "#/$defs/Expression" },
+        "expect": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Expression" },
+          "minItems": 1
+        },
+        "successCriterionRefs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "default": []
+        }
+      }
+    },
+    "Implementation": {
+      "description": "Concrete bindings and artifacts materializing the cognitive design as executable Imperatives. Materialization does not create a delivery commitment, issue Directives, authorize execution, or prove that execution fulfilled the Want.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "requirements": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Description" },
+          "default": []
+        },
+        "preferences": { "type": "object", "additionalProperties": {} },
+        "bindings": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ImplementationBinding" },
+          "default": []
+        },
+        "sourceArtifacts": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/MaterializedArtifact" },
+          "default": []
+        },
+        "testArtifacts": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/MaterializedArtifact" },
+          "default": []
+        },
+        "buildArtifacts": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/MaterializedArtifact" },
+          "default": []
+        }
+      }
+    },
+    "ImplementationBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["semanticRef", "bindingKind", "target", "derivedFromRefs"],
+      "properties": {
+        "semanticRef": { "$ref": "#/$defs/SemanticRef" },
+        "bindingKind": { "enum": ["source", "function", "tool", "api", "service", "database", "model", "runtime", "external"] },
+        "target": { "type": "string", "minLength": 1 },
+        "configuration": { "type": "object", "additionalProperties": {} },
+        "derivedFromRefs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "minItems": 1,
+          "uniqueItems": true,
+          "description": "Cognitive or semantic graph nodes this concrete binding materializes."
+        }
+      }
+    },
+    "MaterializedArtifact": {
+      "description": "A content-addressed artifact derived from referenced cognitive or semantic nodes. Its executable operations realize Imperatives supporting the issued Directives; artifact existence alone is not evidence of their effects.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "location", "contentHash", "derivedFromRefs"],
+      "properties": {
+        "id": { "$ref": "#/$defs/SemanticId" },
+        "kind": { "enum": ["source", "test", "build", "configuration", "schema", "package"] },
+        "location": { "type": "string", "minLength": 1 },
+        "contentHash": { "$ref": "#/$defs/ContentHash" },
+        "derivedFromRefs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      }
+    },
+
+    "ChangeControl": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["bindings"],
+      "properties": {
+        "bindings": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/CrossStratumBinding" },
+          "default": []
+        },
+        "revisionRequests": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/RevisionRequest" },
+          "default": []
+        }
+      }
+    },
+    "CrossStratumBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "consumer", "provider", "status", "affectedRefs"],
+      "properties": {
+        "id": { "$ref": "#/$defs/SemanticId" },
+        "consumer": { "$ref": "#/$defs/StratumBinding" },
+        "provider": { "$ref": "#/$defs/StratumBinding" },
+        "status": { "enum": ["current", "stale", "unverified"] },
+        "affectedRefs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "uniqueItems": true,
+          "description": "The known blast radius if the provider version or hash no longer matches."
+        },
+        "impact": { "$ref": "#/$defs/Description" }
+      }
+    },
+    "RevisionRequestKind": {
+      "enum": [
+        "conceptual-clarification-required",
+        "semantic-clarification-required",
+        "semantic-change-required",
+        "mechanism-revision-required",
+        "binding-unavailable"
+      ]
+    },
+    "RevisionRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "raisedByStratum", "targetStratum", "against", "reason", "status"],
+      "properties": {
+        "id": { "$ref": "#/$defs/SemanticId" },
+        "kind": { "$ref": "#/$defs/RevisionRequestKind" },
+        "raisedByStratum": { "$ref": "#/$defs/StratumName" },
+        "targetStratum": { "$ref": "#/$defs/StratumName" },
+        "against": { "$ref": "#/$defs/StratumBinding" },
+        "reason": { "$ref": "#/$defs/Description" },
+        "issueRefs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "uniqueItems": true,
+          "default": []
+        },
+        "affectedRefs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "uniqueItems": true,
+          "default": []
+        },
+        "evidenceRefs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "uniqueItems": true,
+          "default": []
+        },
+        "requestedDisposition": { "enum": ["clarify", "revise", "rebind", "change"] },
+        "blocking": { "type": "boolean", "default": true },
+        "status": { "enum": ["open", "accepted", "rejected", "superseded", "resolved"] }
+      },
+      "description": "The only way a downstream owner asks an upstream owner to change authoritative content; it grants no mutation authority."
+    },
+
+    "Provenance": {
+      "description": "Derivation and decision records supporting traceability from realization toward design, semantic obligations, and the original expression. Neither provenance nor decision authorship supplies the missing dedicated delivery commitment or Directive issuance/authorship records in IR 0.3.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "derivedFrom": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "uniqueItems": true,
+          "default": []
+        },
+        "decisions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/DecisionRecord" },
+          "default": []
+        }
+      }
+    },
+    "DecisionRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "decision"],
+      "properties": {
+        "id": { "$ref": "#/$defs/SemanticId" },
+        "decision": { "$ref": "#/$defs/Description" },
+        "rationale": { "$ref": "#/$defs/Description" },
+        "madeByRef": { "$ref": "#/$defs/SemanticRef" },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "derivedFromRefs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticRef" },
+          "default": []
+        }
+      }
+    }
+  }
+}
