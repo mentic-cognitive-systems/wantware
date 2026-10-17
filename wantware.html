@@ -1,0 +1,891 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Wantware</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="What Wantware is, as a process and as a product: the layer built on software the way software is built on hardware.">
+<!--
+  WANTWARE, an explainer
+  Single reading page with a draggable document viewer. Fonts from Google Fonts with system fallbacks.
+  Sources: README.md, Wantware.md, WantwareIR.md, WantWare-prompt-history.md,
+  Adding the Wantware Representation to the Agency.md, Wantware Implementation Plan.md (this folder),
+  plus architectures/The WantWare Development Process.md and architectures/WantWare/.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..500&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column with wide breakouts; the page is a cross-section of three layers,
+   coloured by layer (hardware green, software blue, wantware crimson) wherever a layer is meant. */
+:root {
+  --bg: #f3f5f6;
+  --surface: #ffffff;
+  --sunk: #e8ecef;
+  --ink: #15202a;
+  --ink-2: #485662;
+  --ink-3: #75828e;
+  --line: #d5dce2;
+  --line-2: #b9c3cc;
+
+  --hw: #2d6e50;  --hw-soft: #e0eee7;
+  --sw: #2a5ca6;  --sw-soft: #e2eaf6;
+  --ww: #a63f50;  --ww-soft: #f5e3e7;
+  --ok: #22744a;  --ok-soft: #dff1e6;
+  --gap: #a3392f; --gap-soft: #f8e4e1;
+
+  --f-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Newsreader", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  --t-xs: .74rem;
+  --t-sm: .88rem;
+  --t-base: 1.08rem;
+  --t-md: 1.3rem;
+  --t-lg: 1.75rem;
+  --t-xl: clamp(2rem, 4.2vw, 2.7rem);
+  --t-hero: clamp(3.4rem, 11vw, 7rem);
+
+  --measure: 41rem;
+  --wide: 68rem;
+  --r: 4px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1419; --surface: #161c23; --sunk: #1b232b; --ink: #e3e8ec; --ink-2: #a7b2bc; --ink-3: #75818c;
+    --line: #29323c; --line-2: #3a4652;
+    --hw: #6cc39a; --hw-soft: #142820;
+    --sw: #8db2f0; --sw-soft: #172438;
+    --ww: #ed94a3; --ww-soft: #321c24;
+    --ok: #6fd09b; --ok-soft: #12301f;
+    --gap: #ff9483; --gap-soft: #3a1b17;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1419; --surface: #161c23; --sunk: #1b232b; --ink: #e3e8ec; --ink-2: #a7b2bc; --ink-3: #75818c;
+  --line: #29323c; --line-2: #3a4652;
+  --hw: #6cc39a; --hw-soft: #142820;
+  --sw: #8db2f0; --sw-soft: #172438;
+  --ww: #ed94a3; --ww-soft: #321c24;
+  --ok: #6fd09b; --ok-soft: #12301f;
+  --gap: #ff9483; --gap-soft: #3a1b17;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--f-body);
+  font-size: var(--t-base);
+  line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0;
+}
+img { max-width: 100%; }
+a { color: var(--sw); text-underline-offset: .18em; text-decoration-thickness: 1px; }
+a:hover { text-decoration-thickness: 2px; }
+a:focus-visible { outline: 2px solid var(--ww); outline-offset: 2px; border-radius: 2px; }
+code, .mono { font-family: var(--f-mono); font-size: .86em; }
+code { background: var(--sunk); padding: .08em .32em; border-radius: 3px; overflow-wrap: anywhere; }
+pre { margin: 0; font-family: var(--f-mono); font-size: var(--t-sm); line-height: 1.55; overflow-x: auto; }
+pre code { background: none; padding: 0; font-size: inherit; }
+
+.wrap { max-width: var(--wide); margin: 0 auto; }
+.prose { max-width: var(--measure); }
+.prose > * + * { margin-top: 1em; }
+.prose p { margin: 0; }
+
+h1, h2, h3 { font-family: var(--f-display); font-weight: 700; line-height: 1.12; text-wrap: balance; margin: 0; letter-spacing: -.01em; }
+h2 { font-size: var(--t-xl); }
+h3 { font-size: var(--t-md); font-weight: 650; }
+
+.label {
+  font-family: var(--f-mono);
+  font-size: var(--t-xs);
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  font-weight: 600;
+}
+.hw { --c: var(--hw); --c-soft: var(--hw-soft); }
+.sw { --c: var(--sw); --c-soft: var(--sw-soft); }
+.ww { --c: var(--ww); --c-soft: var(--ww-soft); }
+
+/* ---------- hero ---------- */
+.hero { padding-block: clamp(2.5rem, 7vw, 5rem) 2.5rem; display: grid; gap: 2rem; }
+.hero h1 {
+  font-size: var(--t-hero);
+  font-weight: 800;
+  letter-spacing: -.035em;
+  line-height: .92;
+  font-variation-settings: "opsz" 96;
+}
+.hero h1 span { color: var(--ww); }
+.motto b { font-weight: 800; }
+.motto { display: grid; gap: .1rem; font-family: var(--f-display); font-size: var(--t-md); font-weight: 500; line-height: 1.3; }
+.motto b { font-weight: 700; color: var(--c); }
+.lede { font-size: 1.22rem; line-height: 1.55; color: var(--ink); max-width: 38rem; margin: 0; }
+.toc { display: flex; flex-wrap: wrap; gap: .4rem 1.4rem; padding: 0; margin: 0; list-style: none; font-family: var(--f-mono); font-size: var(--t-sm); }
+.toc a { color: var(--ink-2); text-decoration: none; border-bottom: 1px solid var(--line-2); }
+.toc a:hover { color: var(--ink); border-color: var(--ink); }
+
+/* the layer stack */
+.stack { display: grid; border: 1px solid var(--line-2); border-radius: var(--r); overflow: hidden; }
+.band {
+  display: grid;
+  grid-template-columns: minmax(10rem, 13rem) 1fr 1fr;
+  gap: 1rem 2rem;
+  padding: 1.25rem 1.5rem;
+  background: var(--c-soft);
+  position: relative;
+}
+.band + .band { border-top: 1px solid var(--line-2); }
+.band.ww { padding-block: 1.75rem; }
+.band-name { display: grid; align-content: start; gap: .1rem; }
+.band-name strong { font-family: var(--f-display); font-size: var(--t-lg); font-weight: 750; color: var(--c); line-height: 1.05; letter-spacing: -.015em; }
+.band-name em { font-style: italic; color: var(--ink-2); }
+.band-cell { min-width: 0; display: grid; gap: .25rem; align-content: start; }
+.band-cell p { margin: 0; line-height: 1.45; }
+.flow { font-family: var(--f-mono); font-size: var(--t-sm); line-height: 1.6; }
+.flow .dim { color: var(--ink-3); }
+.seam {
+  position: absolute; top: -.62rem; left: 1.5rem;
+  font-family: var(--f-mono); font-size: var(--t-xs); letter-spacing: .08em; text-transform: uppercase;
+  background: var(--surface); color: var(--ink-2); border: 1px solid var(--line-2); border-radius: 999px;
+  padding: .05rem .55rem; line-height: 1.5;
+}
+
+/* ---------- sections ---------- */
+section { padding-block: 3.5rem; border-top: 1px solid var(--line); }
+.section-head { display: grid; gap: .6rem; margin-bottom: 1.6rem; }
+.section-head .label { color: var(--c, var(--ink-3)); }
+.sub { margin-top: 3rem; display: grid; gap: 1.2rem; }
+.sub > *, .section-head > *, .hero > * { min-width: 0; }
+
+/* comparison table */
+.table-box { overflow-x: auto; margin-top: 2rem; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); }
+table { border-collapse: collapse; width: 100%; min-width: 46rem; font-size: var(--t-sm); line-height: 1.45; }
+th, td { text-align: left; vertical-align: top; padding: .8rem 1rem; border-bottom: 1px solid var(--line); }
+tr:last-child > * { border-bottom: 0; }
+thead th { font-family: var(--f-display); font-size: var(--t-base); font-weight: 700; color: var(--c, var(--ink)); background: var(--c-soft, transparent); }
+tbody th { font-family: var(--f-mono); font-size: var(--t-xs); text-transform: uppercase; letter-spacing: .07em; color: var(--ink-3); font-weight: 600; width: 9.5rem; }
+td.ww-col { background: color-mix(in srgb, var(--ww-soft) 45%, transparent); }
+
+/* maxim */
+.maxim {
+  display: flex; flex-wrap: wrap; gap: .3rem .55rem; align-items: baseline;
+  font-family: var(--f-display); font-weight: 700; font-size: clamp(1.05rem, 2.6vw, 1.5rem); letter-spacing: .02em;
+  margin: 2rem 0 0;
+}
+/* Shared progression for the process summary and its detailed stages. */
+.stage-1 { --c: var(--ww); }
+.stage-2 { --c: color-mix(in srgb, var(--ww) 67%, var(--sw)); }
+.stage-3 { --c: color-mix(in srgb, var(--ww) 33%, var(--sw)); }
+.stage-4 { --c: var(--sw); }
+.stage-5 { --c: color-mix(in srgb, var(--sw) 67%, var(--hw)); }
+.stage-6 { --c: color-mix(in srgb, var(--sw) 33%, var(--hw)); }
+.stage-7 { --c: var(--hw); }
+.maxim span { color: var(--c); }
+.maxim i { font-style: normal; color: var(--ink-3); font-weight: 400; }
+
+/* the ladder */
+.ladder { list-style: none; margin: 2rem 0 0; padding: 0; display: grid; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); overflow: hidden; }
+.group {
+  display: flex; flex-wrap: wrap; justify-content: space-between; gap: .3rem 1rem;
+  padding: .65rem 1.25rem; background: var(--c-soft); color: var(--c);
+  font-family: var(--f-mono); font-size: var(--t-xs); letter-spacing: .08em; text-transform: uppercase; font-weight: 600;
+}
+.group + .rung, .rung + .rung { border-top: 1px solid var(--line); }
+.rung + .group { border-top: 1px solid var(--line-2); }
+.rung {
+  display: grid;
+  grid-template-columns: 12.5rem minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: 1rem 1.75rem;
+  padding: 1.3rem 1.25rem;
+}
+.rung-meta { display: grid; gap: .35rem; align-content: start; }
+.rung-meta .n { font-family: var(--f-mono); font-size: var(--t-xs); color: var(--ink-3); }
+.rung-meta h3 { color: var(--c); }
+.rung .verb { color: var(--c); }
+.verb { font-family: var(--f-mono); font-size: var(--t-xs); letter-spacing: .1em; font-weight: 600; color: var(--ink-2); }
+.phase { font-style: italic; color: var(--ink-3); font-size: var(--t-sm); }
+.pbar { height: 6px; background: var(--sunk); border-radius: 3px; overflow: hidden; margin-top: .35rem; }
+.pbar span { display: block; height: 100%; background: var(--c); opacity: .75; border-radius: 3px; }
+.rung-body { display: grid; gap: .55rem; align-content: start; min-width: 0; }
+.rung-body .q { font-size: 1.12rem; line-height: 1.4; margin: 0; }
+.rung-body dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: .2rem .8rem; font-size: var(--t-sm); }
+.rung-body dt { font-family: var(--f-mono); font-size: var(--t-xs); text-transform: uppercase; letter-spacing: .07em; color: var(--ink-3); padding-top: .15rem; }
+.rung-body dd { margin: 0; color: var(--ink-2); }
+.example {
+  min-width: 0; align-self: start;
+  background: var(--sunk); border-radius: var(--r); padding: .85rem 1rem;
+  font-size: var(--t-sm); line-height: 1.5;
+}
+.example p { margin: 0; }
+.example p + p, .example p + pre, .example pre + p { margin-top: .5rem; }
+.example .quote { font-size: 1.08rem; font-style: italic; }
+.example .note { color: var(--ink-3); font-size: var(--t-xs); font-family: var(--f-mono); letter-spacing: .02em; }
+.kv { margin: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: .2rem .8rem; font-family: var(--f-mono); font-size: .78rem; line-height: 1.5; }
+.kv dt { color: var(--c); font-weight: 600; }
+.kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.example .kv + p { margin-top: .5rem; }
+.directions { display: flex; flex-wrap: wrap; gap: .6rem 2rem; margin-top: 1rem; font-family: var(--f-mono); font-size: var(--t-sm); color: var(--ink-2); }
+.directions b { color: var(--ink); }
+
+/* reverse path */
+.climb { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column-reverse; gap: 0; border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; background: var(--surface); }
+.climb li { display: grid; grid-template-columns: 9.5rem minmax(0, 1fr) auto; gap: .5rem 1.2rem; align-items: baseline; padding: .7rem 1.1rem; font-size: var(--t-sm); }
+.climb li + li { border-bottom: 1px solid var(--line); }
+.climb .stage { font-family: var(--f-mono); font-size: var(--t-xs); text-transform: uppercase; letter-spacing: .07em; color: var(--ink-3); }
+.climb .ans { font-family: var(--f-mono); font-size: var(--t-xs); font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+.climb .no .ans { color: var(--ink-3); }
+.climb .yes { background: var(--gap-soft); }
+.climb .yes .ans, .climb .yes .stage { color: var(--gap); }
+.climb .unreached { color: var(--ink-3); }
+
+/* authorities */
+.asks { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+.ask { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 1rem 1.1rem; display: grid; gap: .4rem; align-content: start; font-size: var(--t-sm); line-height: 1.5; }
+.ask h4 { margin: 0; font-family: var(--f-display); font-size: var(--t-base); color: var(--ww); }
+.ask p { margin: 0; color: var(--ink-2); }
+.pull { font-size: 1.2rem; font-style: italic; line-height: 1.45; margin: 0; padding-left: 1rem; border-left: 2px solid var(--line-2); max-width: var(--measure); }
+
+/* speech acts */
+.acts { list-style: none; margin: 0; padding: 0; display: grid; border-top: 1px solid var(--line); }
+.acts li { display: grid; grid-template-columns: 9.5rem minmax(0, 1fr) minmax(0, 1.2fr); gap: .4rem 1.4rem; padding: .8rem 0; border-bottom: 1px solid var(--line); font-size: var(--t-sm); line-height: 1.5; }
+.acts .act { font-family: var(--f-display); font-weight: 700; font-size: var(--t-base); }
+.acts .role { color: var(--ink-2); }
+.acts .eg { font-style: italic; }
+.acts li.loop .act { color: var(--ok); }
+
+/* evidence */
+.neq { font-family: var(--f-display); font-weight: 700; font-size: clamp(1.15rem, 3vw, 1.7rem); line-height: 1.25; display: flex; flex-wrap: wrap; gap: .2rem .7rem; align-items: baseline; }
+.neq i { font-style: normal; color: var(--gap); font-weight: 500; }
+.card-code { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 1rem 1.1rem; max-width: var(--measure); }
+.axes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem 2rem; max-width: var(--wide); }
+.axis { display: grid; gap: .5rem; align-content: start; }
+.chips { display: flex; flex-wrap: wrap; gap: .35rem; }
+.chip { font-family: var(--f-mono); font-size: .72rem; letter-spacing: .03em; padding: .14rem .5rem; border-radius: 999px; border: 1px solid var(--line-2); color: var(--ink-2); background: var(--surface); white-space: nowrap; }
+
+/* product: strata */
+.strata-wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2rem 3rem; align-items: start; }
+.strata { display: grid; gap: 0; }
+.stratum { border: 1px solid var(--line-2); background: var(--surface); border-radius: var(--r); padding: .85rem 1rem; display: grid; grid-template-columns: 1fr auto; gap: .15rem 1rem; }
+.stratum strong { font-family: var(--f-mono); font-size: var(--t-sm); letter-spacing: .08em; color: var(--ww); }
+.stratum span { font-size: var(--t-sm); color: var(--ink-2); grid-column: 1 / -1; }
+.stratum small { font-family: var(--f-mono); font-size: var(--t-xs); color: var(--ink-3); align-self: center; }
+.stratum.mat { background: var(--sw-soft); }
+.stratum.mat strong { color: var(--sw); }
+.handoff { font-family: var(--f-mono); font-size: var(--t-xs); color: var(--ink-3); padding: .35rem 0 .35rem 1rem; letter-spacing: .03em; }
+
+.props { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.5rem 2rem; margin-top: 2.5rem; }
+.prop { display: grid; gap: .5rem; align-content: start; font-size: var(--t-base); }
+.prop h3 { font-size: var(--t-md); }
+.prop p { margin: 0; color: var(--ink-2); line-height: 1.55; }
+
+.fan { margin-top: 2.5rem; display: grid; grid-template-columns: auto auto 1fr; gap: 1rem 1.5rem; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 1.25rem 1.5rem; }
+.fan .node { font-family: var(--f-mono); font-size: var(--t-sm); padding: .5rem .8rem; border-radius: var(--r); border: 1px solid var(--line-2); white-space: nowrap; }
+.fan .node.ir { background: var(--ww-soft); border-color: transparent; color: var(--ww); font-weight: 600; }
+.fan .node.cod { background: var(--sunk); border-color: transparent; }
+.fan .arrow { color: var(--ink-3); font-family: var(--f-mono); }
+.fan .targets { display: flex; flex-wrap: wrap; gap: .4rem; }
+.fan .targets span { font-family: var(--f-mono); font-size: var(--t-sm); background: var(--sw-soft); color: var(--sw); padding: .3rem .65rem; border-radius: var(--r); white-space: nowrap; }
+.fan-head { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; }
+.binding { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: .4rem 1rem; font-size: var(--t-sm); color: var(--ink-2); border-top: 1px dashed var(--line-2); padding-top: .9rem; }
+
+.chain { display: flex; flex-wrap: wrap; gap: .35rem .4rem; align-items: center; font-family: var(--f-mono); font-size: var(--t-sm); }
+.chain span {
+  --early: color-mix(in srgb, var(--ww) clamp(0%, calc(100% - var(--i) * 20%), 100%), var(--sw));
+  --early-soft: color-mix(in srgb, var(--ww-soft) clamp(0%, calc(100% - var(--i) * 20%), 100%), var(--sw-soft));
+  --late: clamp(0%, calc((var(--i) - 5) * 20%), 100%);
+  padding: .25rem .55rem; border-radius: var(--r);
+  background: color-mix(in srgb, var(--hw-soft) var(--late), var(--early-soft));
+  color: color-mix(in srgb, var(--hw) var(--late), var(--early));
+  white-space: nowrap;
+}
+.chain i { font-style: normal; color: var(--ink-3); }
+
+/* doctrine */
+.doctrine { list-style: none; margin: 0; padding: 0; display: grid; gap: .1rem; font-family: var(--f-display); font-size: clamp(1.35rem, 3.4vw, 2.1rem); font-weight: 650; line-height: 1.25; letter-spacing: -.01em; }
+.doctrine li:nth-child(4) { color: var(--ww); }
+
+/* status */
+.status { margin: 0; display: grid; grid-template-columns: 9.5rem minmax(0, 1fr); gap: 0; border-top: 1px solid var(--line); max-width: 56rem; }
+.status dt, .status dd { margin: 0; padding: .85rem 0; border-bottom: 1px solid var(--line); }
+.status dd { font-size: var(--t-base); line-height: 1.55; }
+.status dt .chip.ok { color: var(--ok); background: var(--ok-soft); border-color: transparent; }
+.status dt .chip.spec { color: var(--sw); background: var(--sw-soft); border-color: transparent; }
+.status dt .chip.gap { color: var(--gap); background: var(--gap-soft); border-color: transparent; }
+
+/* reading list */
+.reading { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 2.5rem; max-width: 60rem; }
+.reading li { padding: .75rem 0; border-bottom: 1px solid var(--line); display: grid; gap: .15rem; min-width: 0; }
+.reading a { font-family: var(--f-display); font-weight: 600; font-size: var(--t-base); overflow-wrap: anywhere; }
+.reading span { color: var(--ink-2); font-size: var(--t-sm); line-height: 1.45; }
+.reading .where { font-family: var(--f-mono); font-size: var(--t-xs); color: var(--ink-3); }
+
+footer { border-top: 1px solid var(--line); padding-block: 2rem 3rem; font-family: var(--f-mono); font-size: var(--t-xs); color: var(--ink-3); letter-spacing: .03em; }
+
+/* ---------- document viewer ---------- */
+.document-viewer {
+  position: fixed; inset: auto; margin: 0; padding: 0;
+  width: min(56rem, calc(100vw - 24px)); height: min(80dvh, 52rem);
+  max-width: calc(100vw - 24px); max-height: calc(100dvh - 24px);
+  border: 1px solid var(--line-2); border-radius: 8px;
+  background: var(--surface); color: var(--ink);
+  box-shadow: 0 20px 80px #0005;
+}
+.document-viewer[open] { display: flex; flex-direction: column; }
+.document-viewer::backdrop { background: #080f1855; }
+.document-bar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1rem;
+  padding: .8rem 1rem; background: var(--sunk); border-bottom: 1px solid var(--line);
+  cursor: grab; touch-action: none; user-select: none;
+}
+.document-bar.dragging { cursor: grabbing; }
+.document-bar:focus-visible { outline: 2px solid var(--ww); outline-offset: -3px; }
+.document-bar h2 { flex: 1 1 14rem; font-size: 1rem; overflow-wrap: anywhere; }
+.document-actions { display: flex; align-items: center; gap: .7rem; font-family: var(--f-display); font-size: .85rem; }
+.document-actions button {
+  font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line-2);
+  border-radius: var(--r); padding: .35rem .6rem; cursor: pointer;
+}
+.document-actions button:disabled { opacity: .45; cursor: default; }
+.document-actions button:focus-visible { outline: 2px solid var(--ww); outline-offset: 2px; }
+.document-body { flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; padding: clamp(1rem, 4vw, 2rem); }
+body:has(.document-viewer[open]) { overflow: hidden; }
+
+/* ---------- responsive ---------- */
+@media (max-width: 960px) {
+  .rung { grid-template-columns: 11rem minmax(0, 1fr); }
+  .rung .example { grid-column: 2; }
+  .props { grid-template-columns: 1fr; max-width: var(--measure); }
+  .strata-wrap { grid-template-columns: 1fr; }
+}
+@media (max-width: 760px) {
+  .band { grid-template-columns: 1fr; gap: .8rem; padding: 1.25rem 1.1rem 1.1rem; }
+  .band.ww { padding-block: 1.6rem 1.25rem; }
+  .seam { left: 1.1rem; }
+  .asks { grid-template-columns: 1fr; }
+  .acts li { grid-template-columns: 1fr; gap: .15rem; }
+  .axes { grid-template-columns: 1fr; }
+  .fan { grid-template-columns: 1fr; padding: 1.1rem; }
+  .fan .arrow { transform: rotate(90deg); }
+  .reading { grid-template-columns: 1fr; }
+}
+@media (max-width: 620px) {
+  .rung { grid-template-columns: 1fr; padding: 1.1rem 1rem; }
+  .rung .example { grid-column: 1; }
+  .rung-meta { grid-template-columns: 1fr auto; align-items: baseline; }
+  .rung-meta .pbar, .rung-meta .phase { grid-column: 1 / -1; }
+  .climb li { grid-template-columns: 1fr auto; }
+  .climb li > span:nth-child(2) { grid-column: 1 / -1; grid-row: 2; }
+  .status { grid-template-columns: 1fr; }
+  .status dt { border-bottom: 0; padding-bottom: 0; }
+  .status dd { padding-top: .4rem; }
+  section { padding-block: 2.75rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { scroll-behavior: auto !important; }
+}
+html { scroll-behavior: smooth; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <span class="label">Agency / docs / wantware</span>
+  <h1><span>Want</span>ware</h1>
+  <div class="motto">
+    <div class="hw"><b>Hard</b>ware executes physics.</div>
+    <div class="sw"><b>Soft</b>ware executes logic.</div>
+    <div class="ww"><b>Want</b>ware executes purpose.</div>
+  </div>
+  <p class="lede">Software is a layer built on hardware, with a product of its own (programs) and a process of its own (write, compile, run). Wantware is the next layer, built on software. Its product is a want held as a precise, versioned contract. Its process turns that contract into software and then checks the running result against the original want.</p>
+
+  <div class="stack" role="group" aria-label="The three layers, wantware on top">
+    <div class="band ww">
+      <div class="band-name"><strong>Wantware</strong><em>executes purpose</em></div>
+      <div class="band-cell">
+        <span class="label">Product</span>
+        <p>A want held as a versioned contract, with the mechanism designed to satisfy it and the evidence that it did.</p>
+      </div>
+      <div class="band-cell">
+        <span class="label">Process</span>
+        <p class="flow">conceive → conceptualize → formalize → cognify <span class="dim">→ codify → compile → compute</span></p>
+      </div>
+    </div>
+    <div class="band sw">
+      <span class="seam">wantware stands on software</span>
+      <div class="band-name"><strong>Software</strong><em>executes logic</em></div>
+      <div class="band-cell">
+        <span class="label">Product</span>
+        <p>A program: source you keep and change, and the executable a machine runs.</p>
+      </div>
+      <div class="band-cell">
+        <span class="label">Process</span>
+        <p class="flow">write → compile → run</p>
+      </div>
+    </div>
+    <div class="band hw">
+      <span class="seam">software stands on hardware</span>
+      <div class="band-name"><strong>Hardware</strong><em>executes physics</em></div>
+      <div class="band-cell">
+        <span class="label">Product</span>
+        <p>A machine: processors, memory, devices.</p>
+      </div>
+      <div class="band-cell">
+        <span class="label">Process</span>
+        <p class="flow">specify → design → fabricate → test</p>
+      </div>
+    </div>
+  </div>
+
+  <ul class="toc" aria-label="Sections">
+    <li><a href="#layers">One layer up</a></li>
+    <li><a href="#process">The process</a></li>
+    <li><a href="#product">The product</a></li>
+    <li><a href="#doctrine">The short version</a></li>
+    <li><a href="#status">Where it stands</a></li>
+    <li><a href="#read">Read further</a></li>
+  </ul>
+</header>
+
+<!-- ============================================================ -->
+<section id="layers">
+  <div class="section-head">
+    <span class="label">The analogy</span>
+    <h2>One layer up</h2>
+  </div>
+  <div class="prose">
+    <p>Each layer in computing gave people something new to write down. Hardware made physics compute. Software let people write behavior as text instead of wiring it into circuits. The instruction set was the contract that made this work: write to it, and any machine that honors it will run your program.</p>
+    <p>Wantware makes the same move one layer up. It lets people write down what they want, precisely enough to version it, check it, and build from it. Its contract with the layer below is a set of capabilities, such as <code>readEmail</code>, rather than particular code. Any implementation that provides the capability will do: the Gmail API today, IMAP tomorrow, a test fixture during validation.</p>
+    <p>Software did not replace circuit design, and wantware does not replace software engineering. Below the code boundary, ordinary engineering stays in charge. Wantware's new work happens above it, where a want is captured, read, given exact meaning, and designed for.</p>
+  </div>
+
+  <div class="table-box">
+    <table>
+      <thead>
+        <tr>
+          <th scope="col"><span class="label">Layer</span></th>
+          <th scope="col" class="hw">Hardware</th>
+          <th scope="col" class="sw">Software</th>
+          <th scope="col" class="ww">Wantware</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><th scope="row">Executes</th><td>Physics</td><td>Logic</td><td class="ww-col">Purpose</td></tr>
+        <tr><th scope="row">Authors write</th><td>Circuits</td><td>Source code</td><td class="ww-col">Wants, semantic contracts, mechanism designs</td></tr>
+        <tr><th scope="row">Product</th><td>A machine</td><td>A program</td><td class="ww-col">A versioned contract for a want, its mechanism, its bindings, and its evidence</td></tr>
+        <tr><th scope="row">Process</th><td>Specify, design, fabricate, test</td><td>Write, compile, run</td><td class="ww-col">Conceive, conceptualize, formalize, cognify, then software's own write, compile, run</td></tr>
+        <tr><th scope="row">Stands on</th><td>Physics</td><td>An instruction set. Any chip that implements it will do.</td><td class="ww-col">Software capabilities. Any code that implements them will do.</td></tr>
+        <tr><th scope="row">Takes away</th><td>Calculating by hand</td><td>Rewiring the machine for each new task</td><td class="ww-col">Hand-translating each want into code, and losing the want once the code exists</td></tr>
+        <tr><th scope="row">Counts as done when</th><td>The part passes its test vectors</td><td>The tests pass</td><td class="ww-col">Observed evidence establishes each success claim</td></tr>
+        <tr><th scope="row">On failure, ask</th><td>Is the part faulty?</td><td>Is the code wrong?</td><td class="ww-col">Which layer, from computation up to the want itself, explains it?</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="process">
+  <div class="section-head ww">
+    <span class="label">Wantware as a process</span>
+    <h2>Seven transformations, from want to running machinery</h2>
+  </div>
+  <div class="prose">
+    <p>Software's process has three verbs: write, compile, run. Wantware keeps them as its bottom three stages and adds four above them. The stages are kinds of transformation, not a document waterfall. One element of a system can be confirmed while its neighbor is still a rough idea, and each element carries its own stage, version, and provenance.</p>
+  </div>
+
+  <p class="maxim" aria-label="Want, intend, define, devise, write, build, run">
+    <span class="stage-1">WANT</span><i>↔</i><span class="stage-2">INTEND</span><i>↔</i><span class="stage-3">DEFINE</span><i>↔</i><span class="stage-4">DEVISE</span><i>↔</i><span class="stage-5">WRITE</span><i>↔</i><span class="stage-6">BUILD</span><i>↔</i><span class="stage-7">RUN</span>
+  </p>
+
+  <ol class="ladder" aria-label="The seven stages, with one want followed through each">
+    <li class="group ww"><span>Added by wantware</span><span>Running example: one want, followed down</span></li>
+
+    <li class="rung stage-1">
+      <div class="rung-meta">
+        <span class="n">1</span>
+        <h3>Conception</h3>
+        <span class="verb">WANT</span>
+        <span class="phase">gassy; contradiction allowed</span>
+        <div class="pbar" title="Possibility space remaining"><span style="width:100%"></span></div>
+      </div>
+      <div class="rung-body">
+        <p class="q">What is wanted?</p>
+        <dl><dt>Artifact</dt><dd>The words, verbatim, unimproved</dd><dt>Held by</dt><dd>The client, who is sovereign over meaning</dd></dl>
+      </div>
+      <div class="example">
+        <p class="quote">“I don't want to miss anything important.”</p>
+        <p class="note">Expressive want. Every later stage stays traceable to this.</p>
+      </div>
+    </li>
+
+    <li class="rung stage-2">
+      <div class="rung-meta">
+        <span class="n">2</span>
+        <h3>Conceptualization</h3>
+        <span class="verb">INTEND</span>
+        <span class="phase">condensing</span>
+        <div class="pbar"><span style="width:76%"></span></div>
+      </div>
+      <div class="rung-body">
+        <p class="q">What do I mean by what I want?</p>
+        <dl><dt>Artifact</dt><dd>A recorded reading, marked as a reading</dd><dt>Held by</dt><dd>The interpreter, until the client confirms it</dd></dl>
+      </div>
+      <div class="example">
+        <p>Important information may arrive through email, calendar, messages, and tasks. Important means time-sensitive, consequential, requiring action, or involving certain people.</p>
+        <p class="note">A reading. Awaiting the client's confirmation.</p>
+      </div>
+    </li>
+
+    <li class="rung stage-3">
+      <div class="rung-meta">
+        <span class="n">3</span>
+        <h3>Formalization</h3>
+        <span class="verb">DEFINE</span>
+        <span class="phase">fluid but shaped</span>
+        <div class="pbar"><span style="width:62%"></span></div>
+      </div>
+      <div class="rung-body">
+        <p class="q">What exactly is wanted, and what must remain true?</p>
+        <dl><dt>Artifact</dt><dd><code>SemanticContract@v</code>: ontology, constraints, success claims, evidence requirements, unknowns</dd><dt>Held by</dt><dd>The Formalizer, who may not choose the implementation</dd></dl>
+      </div>
+      <div class="example">
+<dl class="kv"><dt>ENTITY</dt><dd>InformationItem → Email, CalendarEvent, Task</dd><dt>CLAIM</dt><dd>every configured source was reviewed</dd><dt>EVIDENCE</dt><dd>each query completed, result KNOWN or KNOWN_ABSENT</dd><dt>UNKNOWN</dt><dd>should Slack count as a source?</dd></dl>
+      </div>
+    </li>
+
+    <li class="rung stage-4">
+      <div class="rung-meta">
+        <span class="n">4</span>
+        <h3>Cognification</h3>
+        <span class="verb">DEVISE</span>
+        <span class="phase">crystallizing</span>
+        <div class="pbar"><span style="width:48%"></span></div>
+      </div>
+      <div class="rung-body">
+        <p class="q">What mechanism satisfies that contract?</p>
+        <dl><dt>Artifact</dt><dd><code>MechanismDesign@v</code>: architecture, procedures, capabilities, failure paths, observation plan</dd><dt>Held by</dt><dd>The Cognifier, who may not change the contract</dd></dl>
+      </div>
+      <div class="example">
+<dl class="kv"><dt>PROCEDURE</dt><dd>collect → classify → select → surface</dd><dt>USES</dt><dd>readEmail, inspectCalendar, notifyPerson</dd><dt>IF</dt><dd>source unavailable → retry, then escalate</dd><dt>IF</dt><dd>classification unsure → ask for review</dd></dl>
+      </div>
+    </li>
+
+    <li class="group sw"><span>Software engineering, as it already exists</span><span>Below the code boundary</span></li>
+
+    <li class="rung stage-5">
+      <div class="rung-meta">
+        <span class="n">5</span>
+        <h3>Codification</h3>
+        <span class="verb">WRITE</span>
+        <span class="phase">true form, still soft</span>
+        <div class="pbar"><span style="width:31%"></span></div>
+      </div>
+      <div class="rung-body">
+        <p class="q">What source materializes the mechanism?</p>
+        <dl><dt>Artifact</dt><dd>Source, tests, schema, configuration, and a <code>CodificationManifest@v</code></dd><dt>Held by</dt><dd>The Codifier, who may not invent design or requirements</dd></dl>
+      </div>
+      <div class="example">
+<dl class="kv"><dt>readEmail</dt><dd>→ Gmail API | Microsoft Graph | IMAP | test fixture</dd></dl>
+        <p>Tests and validators come from the same contract as the source.</p>
+      </div>
+    </li>
+
+    <li class="rung stage-6">
+      <div class="rung-meta">
+        <span class="n">6</span>
+        <h3>Compilation</h3>
+        <span class="verb">BUILD</span>
+        <span class="phase">frozen</span>
+        <div class="pbar"><span style="width:14%"></span></div>
+      </div>
+      <div class="rung-body">
+        <p class="q">Can the source become runnable machinery?</p>
+        <dl><dt>Artifact</dt><dd>Build artifacts bound to a runtime</dd><dt>Held by</dt><dd>Build tooling; the Integrator checks the candidate coheres</dd></dl>
+      </div>
+      <div class="example">
+        <p>Type-check, bundle, package. A passing build is evidence about realization only. It says nothing yet about whether the want was met.</p>
+      </div>
+    </li>
+
+    <li class="rung stage-7">
+      <div class="rung-meta">
+        <span class="n">7</span>
+        <h3>Computation</h3>
+        <span class="verb">RUN</span>
+        <span class="phase">determined; one trajectory</span>
+        <div class="pbar"><span style="width:3.5%"></span></div>
+      </div>
+      <div class="rung-body">
+        <p class="q">What happens when it runs?</p>
+        <dl><dt>Artifact</dt><dd>An execution trace and evidence records</dd><dt>Held by</dt><dd>The runtime; an independent validator judges the claims</dd></dl>
+      </div>
+      <div class="example">
+<dl class="kv"><dt>calendar query</dt><dd>ACQUIRED → [] → KNOWN_ABSENT</dd><dt>claim</dt><dd>“calendar reviewed” established</dd><dt>3 items</dt><dd>surfaced, notification VERIFIED</dd></dl>
+      </div>
+    </li>
+  </ol>
+  <div class="directions">
+    <span><b>↓ Realization.</b> The want becomes machinery.</span>
+    <span><b>↑ Reflection and repair.</b> Evidence travels back to the layer that can use it.</span>
+  </div>
+  <p class="label" style="margin-top:.8rem">Bars show possibility space remaining at each stage, from the model's own chart in Wantware.md §2.8.</p>
+
+  <!-- reverse path -->
+  <div class="sub">
+    <h3>When it fails, the question climbs</h3>
+    <div class="prose">
+      <p>Suppose the system above runs perfectly and the user still misses something important, because it arrived in Slack. Every tool call succeeded. Wantware asks, one boundary at a time, which layer explains the failure, and repairs at the lowest one that does.</p>
+    </div>
+    <ol class="climb" aria-label="The reverse path, starting at computation">
+      <li class="no start"><span class="stage">Computation</span><span>Did the machinery run incorrectly?</span><span class="ans">No</span></li>
+      <li class="no"><span class="stage">Compilation</span><span>Was the executable built incorrectly?</span><span class="ans">No</span></li>
+      <li class="no"><span class="stage">Codification</span><span>Does the source misimplement the design?</span><span class="ans">No</span></li>
+      <li class="no"><span class="stage">Cognification</span><span>Does the mechanism fail to satisfy the contract?</span><span class="ans">No</span></li>
+      <li class="yes"><span class="stage">Formalization</span><span>Is the contract wrong or incomplete? Slack messages were never part of the modeled world.</span><span class="ans">Yes</span></li>
+      <li class="unreached"><span class="stage">Conceptualization</span><span>Was the want read incorrectly?</span><span class="ans">Not reached</span></li>
+      <li class="unreached"><span class="stage">Conception</span><span>Was the want itself incoherent?</span><span class="ans">Not reached</span></li>
+    </ol>
+    <div class="prose">
+      <p>This is a semantic failure, and no amount of perfect execution repairs it. The Cognifier cannot quietly add Slack. It sends a typed <code>semantic-change-required</code> return to the Formalizer, who takes it to the client. Once the client confirms, the contract becomes a new version, and only the elements that depend on the change flow back down. Everything else stays as built.</p>
+    </div>
+  </div>
+
+  <!-- authorities -->
+  <div class="sub">
+    <h3>Who may change what</h3>
+    <div class="prose">
+      <p>Three authorities sit between the want and the code, and none may silently rewrite another. A role that finds a defect upstream returns a typed issue to the owner; it does not patch the owner's work. One person or model can play several roles. The role it is acting in decides what it may change.</p>
+    </div>
+    <p class="pull">“Users should be able to recover their account without compromising their encrypted data.”</p>
+    <div class="asks">
+      <div class="ask">
+        <h4>The Formalizer asks</h4>
+        <p>What is an account? What counts as recovery? Which security properties make up “without compromising”? What evidence would show a recovery worked?</p>
+      </div>
+      <div class="ask">
+        <h4>The Cognifier asks</h4>
+        <p>Recovery key, trusted devices, secret sharing, or escrow? What are the failure modes? What procedure takes a user from locked out to recovered?</p>
+      </div>
+      <div class="ask">
+        <h4>The Codifier asks</h4>
+        <p>Which types, modules, schema, APIs, and tests express the mechanism that was chosen?</p>
+      </div>
+    </div>
+    <div class="table-box" style="margin-top:.5rem">
+      <table style="min-width:36rem">
+        <thead><tr><th scope="col">Role</th><th scope="col">Holds</th><th scope="col">Must not</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Client</th><td>Sovereignty over what is meant</td><td>Have its meaning replaced by a model's convenient guess</td></tr>
+          <tr><th scope="row">Formalizer</th><td>Custody of the semantic contract</td><td>Choose the implementation, or change meaning without the client's confirmation</td></tr>
+          <tr><th scope="row">Cognifier</th><td>The mechanism design</td><td>Change the contract</td></tr>
+          <tr><th scope="row">Codifier</th><td>The source</td><td>Invent design or requirements</td></tr>
+          <tr><th scope="row">Integrator</th><td>A runnable candidate</td><td>Certify its own success, or quietly redefine the mechanism</td></tr>
+          <tr><th scope="row">Auditor</th><td>Read access to every layer</td><td>Repair anything it did not author</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- speech acts -->
+  <div class="sub">
+    <h3>The thread of obligations</h3>
+    <div class="prose">
+      <p>Running through all seven stages is a sequence of speech acts. It records who asked, what is true now, what must become true, who promised to deliver it, and who gave the instructions. A confirmed contract is not a promise to deliver it, and a finished instruction list is not proof the want was met.</p>
+    </div>
+    <ol class="acts">
+      <li><span class="act">Expressive</span><span class="role">States the want and why it matters</span><span class="eg">“I want a reliable daily operational digest.”</span></li>
+      <li><span class="act">Assertive</span><span class="role">Establishes the current and wanted state, keeping evidence apart from assumption</span><span class="eg">“Updates are spread across three systems. The team wants one accurate digest by 9 a.m. each workday.”</span></li>
+      <li><span class="act">Declarative</span><span class="role">Says what must become true to close the gap</span><span class="eg">“The digest covers all three systems, names its sources, flags missing data, and is ready by 9 a.m.”</span></li>
+      <li><span class="act">Commissive</span><span class="role">An accountable actor promises delivery, with scope and conditions</span><span class="eg">“I commit to delivering that digest under these conditions.”</span></li>
+      <li><span class="act">Directive</span><span class="role">The one who committed writes the work instructions</span><span class="eg">“Collect the updates, reconcile them, validate against the acceptance conditions, publish.”</span></li>
+      <li><span class="act">Imperative</span><span class="role">Concrete steps a machine can execute</span><span class="eg">“Fetch each source; normalize; summarize; check coverage; publish; record the result.”</span></li>
+      <li class="loop"><span class="act">↺ Evidence</span><span class="role">Checks the result against the declaratives and the original want</span><span class="eg">A mismatch is recorded as an unmet commitment and re-enters the right stage. The want is never redefined to fit what was produced.</span></li>
+    </ol>
+  </div>
+
+  <!-- evidence -->
+  <div class="sub">
+    <h3>Evidence decides</h3>
+    <p class="neq"><span>tool returned</span><i>≠</i><span>operation succeeded</span><i>≠</i><span>desired state achieved</span></p>
+    <div class="prose">
+      <p>Completion is a property of recorded state, not of a model's confidence. A claim counts as established only when the observations its satisfaction case requires have been acquired, and the reasoning that links those observations to the claim, its warrant, holds up.</p>
+    </div>
+    <div class="card-code">
+<pre>{
+  "action":    "create_record",
+  "transport": { "status": "success" },
+  "evidence":  { "recordsCreated": 0 },
+  "expected":  { "recordsCreated": 1 },
+  "semanticOutcome": "FAILED"
+}</pre>
+    </div>
+    <div class="prose">
+      <p>Knowledge is recorded on two separate axes, so “no data” never quietly turns into a guess. An empty calendar and a failed calendar query look alike to a model filling gaps. Here they are different records.</p>
+    </div>
+    <div class="axes">
+      <div class="axis">
+        <span class="label">What is known</span>
+        <div class="chips"><span class="chip">KNOWN</span><span class="chip">KNOWN_ABSENT</span><span class="chip">UNKNOWN</span><span class="chip">AMBIGUOUS</span></div>
+      </div>
+      <div class="axis">
+        <span class="label">How observation went</span>
+        <div class="chips"><span class="chip">ACQUIRED</span><span class="chip">NOT_QUERIED</span><span class="chip">UNAVAILABLE</span><span class="chip">TOOL_FAILED</span><span class="chip">OBSERVATION_FAILED</span><span class="chip">NOT_APPLICABLE</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="product">
+  <div class="section-head ww">
+    <span class="label">Wantware as a product</span>
+    <h2>What gets made, and what you keep</h2>
+  </div>
+  <div class="strata-wrap">
+    <div class="prose">
+      <p>Software ships in two forms: the source you keep and change, and the executable the machine runs. The executable is derived. If you lose it, you rebuild it from source.</p>
+      <p>Wantware has the same split, one layer up. What you keep is the want, formalized and versioned, together with the mechanism designed for it. What runs is the software derived from that. The code becomes the derived form, the way a binary is.</p>
+      <p>The kept form is the <strong>WantwareIR</strong>: one versioned graph with four strata, each owned by a different authority. Every stratum binds the exact version and content hash of the one above it, so when something upstream changes, what has gone stale is visible instead of implied.</p>
+      <p class="label" style="text-transform:none;letter-spacing:.02em">“Source” here means the source of intent, not source code.</p>
+    </div>
+    <div class="strata" role="group" aria-label="The four strata of WantwareIR">
+      <div class="stratum"><strong>SOURCE</strong><small>client · interpreter</small><span>The want, verbatim, and the recorded reading of it</span></div>
+      <div class="handoff">↕ typed handoff · binds version + hash</div>
+      <div class="stratum"><strong>SEMANTIC</strong><small>Formalizer</small><span>The versioned semantic contract</span></div>
+      <div class="handoff">↕ typed handoff · binds version + hash</div>
+      <div class="stratum"><strong>COGNITIVE</strong><small>Cognifier</small><span>The versioned mechanism design</span></div>
+      <div class="handoff">↕ typed handoff · binds version + hash</div>
+      <div class="stratum mat"><strong>MATERIALIZATION</strong><small>Codifier</small><span>Bindings to concrete code, and artifact manifests</span></div>
+    </div>
+  </div>
+
+  <div class="props">
+    <div class="prop">
+      <h3>Portable</h3>
+      <p>The semantic and cognitive strata name no implementation, so one confirmed snapshot can be codified into several ecosystems. This is the instruction-set idea again, one layer up.</p>
+    </div>
+    <div class="prop">
+      <h3>Self-checking</h3>
+      <p>Source, tests, validators, and runtime telemetry requirements all derive from the same contract. The product carries its own definition of done, and running it produces the evidence to judge it.</p>
+    </div>
+    <div class="prop">
+      <h3>Incremental</h3>
+      <p>An incomplete IR is a valid artifact. Each element has its own version and lifecycle, and readiness is judged per handoff, so a change reopens only what depends on it.</p>
+    </div>
+  </div>
+
+  <div class="fan" role="group" aria-label="One WantwareIR codified into several ecosystems">
+    <div class="node ir">WantwareIR</div>
+    <div class="fan-head"><span class="arrow">→</span><span class="node cod">Codifier</span><span class="arrow">→</span></div>
+    <div class="targets"><span>TypeScript / Bun</span><span>Rust</span><span>Python</span><span>SQL + Workers</span><span>WASM</span></div>
+    <div class="binding">
+      <span><span class="label">Capability</span> <code>readEmail</code> belongs to wantware.</span>
+      <span><span class="label">Binding</span> <code>gmail.users.messages.list</code> belongs to the code.</span>
+    </div>
+  </div>
+
+  <div class="sub">
+    <h3>It gets cheaper the more it runs</h3>
+    <div class="prose">
+      <p>Each time a kind of want is worked all the way down, the reasoning it needed can be turned into ordinary machinery. “Whenever Mom emails about an appointment, put it on my calendar” costs expensive reasoning once: mapping the ontology, writing the procedure, testing a deterministic workflow. After that it runs as incoming email → compiled workflow → calendar event, with no model in the loop.</p>
+    </div>
+    <div class="chain" role="group" aria-label="The crystallization sequence">
+      <span style="--i:0">uncertain intention</span><i>→</i><span style="--i:1">reasoning</span><i>→</i><span style="--i:2">explicit concept</span><i>→</i><span style="--i:3">procedure</span><i>→</i><span style="--i:4">validated procedure</span><i>→</i><span style="--i:5">skill</span><i>→</i><span style="--i:6">guard</span><i>→</i><span style="--i:8">code</span><i>→</i><span style="--i:10">deterministic infrastructure</span>
+    </div>
+    <div class="prose">
+      <p>Failures compound the same way. A repeated mistake becomes a test, the test becomes a guard, and the guard becomes infrastructure. Every fuzzy judgment turned into a deterministic check is intelligence compiled into software.</p>
+      <p>The layer below went through this too. Work that software did constantly, such as video decoding and encryption, eventually moved into dedicated silicon. In wantware, reasoning that recurs moves into code.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="doctrine">
+  <div class="section-head">
+    <span class="label">From the doctrine</span>
+    <h2>The short version</h2>
+  </div>
+  <ol class="doctrine">
+    <li>Cheap cognition executes.</li>
+    <li>Structured state remembers.</li>
+    <li>The harness constrains.</li>
+    <li>Evidence decides.</li>
+    <li>Strong cognition designs.</li>
+    <li>Independent cognition audits.</li>
+    <li>Failure teaches the system.</li>
+  </ol>
+</section>
+
+<!-- ============================================================ -->
+<section id="status">
+  <div class="section-head">
+    <span class="label">October 2026</span>
+    <h2>Where it stands</h2>
+  </div>
+  <dl class="status">
+    <dt><span class="chip spec">Specified</span></dt>
+    <dd>The seven-stage model, the three authorities, and the evidence rules (<a href="Wantware.md">Wantware.md</a>). IR 0.3 and its JSON Schema (<a href="WantwareIR.md">WantwareIR.md</a>, <a href="WantwareIR.schema.json">WantwareIR.schema.json</a>).</dd>
+    <dt><span class="chip">Proposed</span></dt>
+    <dd>Bringing the representation into the Agency's ACE³. The Architect acts as Cognifier and the Builder as Codifier. The Formalizer is a new role.</dd>
+    <dt><span class="chip ok">Implemented</span></dt>
+    <dd>Plan packages P1 and P2: the role renames, a new Integrator role between Builder and Validator, and evidence-based completion in <code>kernel/evidence.js</code> and <code>kernel/wantware-ir.js</code>. A task whose claims are not established now waits in <code>awaiting_evidence</code> instead of passing.</dd>
+    <dt><span class="chip">Not started</span></dt>
+    <dd>P0 (IR fixtures, the grammar decision, schema packaging), then P3 through P8.</dd>
+    <dt><span class="chip gap">Open gap</span></dt>
+    <dd>IR 0.3 has no record for the delivery commitment or for issuing Directives. For now these live in separate engagement records, bound to the exact contract and design versions.</dd>
+    <dt><span class="chip">Not designed yet</span></dt>
+    <dd>The intent language. It will be derived from three deliberately different encodings (MonyTyme, Trindex, MENTIC) instead of being designed up front.</dd>
+  </dl>
+</section>
+
+<!-- ============================================================ -->
+<section id="read">
+  <div class="section-head">
+    <span class="label">Sources</span>
+    <h2>Read further</h2>
+  </div>
+  <ul class="reading">
+    <li><a href="README.md">README</a><span>Index of the document set and the pinned vocabulary: one term, one concept.</span></li>
+    <li><a href="Wantware.md">Wantware</a><span>The model: seven stages, three roles, evidence and satisfaction, the reverse path, crystallization, doctrine.</span></li>
+    <li><a href="WantwareIR.md">WantwareIR</a><span>IR 0.3: the four-stratum graph, bindings, readiness, handoffs, change control.</span></li>
+    <li><a href="WantwareIR.schema.json">WantwareIR.schema.json</a><span>JSON Schema (draft 2020-12) for IR 0.3 envelopes.</span></li>
+    <li><a href="Adding%20the%20Wantware%20Representation%20to%20the%20Agency.md">Adding the Wantware Representation to the Agency</a><span>How the representation enters ACE³: roles, typed handoffs, invariants, staging.</span></li>
+    <li><a href="Wantware%20Implementation%20Plan.md">Wantware Implementation Plan</a><span>The implementation sequence and progress log (§11).</span></li>
+    <li><a href="WantWare-prompt-history.md">WantWare prompt history</a><span>The first-pass IR sketch, kept for its reasoning.</span></li>
+    <li><a href="The%20WantWare%20Development%20Process.md">The WantWare Development Process</a><span>The speech-act flow and the development phases.</span></li>
+    <li><a href="Wantware%20101.md">Wantware 101</a><span>An introductory account of the discipline.</span></li>
+    <li><a href="Wantware%20Generative%20Code%20Orchestration.md">Wantware Generative Code Orchestration</a><span>Process design for decomposing wants into bounded generation tasks.</span></li>
+  </ul>
+</section>
+
+<footer>Drawn from Agency/docs/wantware/ and architectures/WantWare/ · 17 October 2026</footer>
+
+</div>
+<dialog id="document-viewer" class="document-viewer" aria-labelledby="document-title">
+  <header class="document-bar" tabindex="0" aria-label="Move document window with arrow keys or drag">
+    <h2 id="document-title">Document</h2>
+    <div class="document-actions">
+      <button type="button" data-document-back disabled>Back</button>
+      <a data-document-original target="_blank" rel="noopener">Open file ↗</a>
+      <button type="button" data-document-close autofocus>Close</button>
+    </div>
+  </header>
+  <div class="document-body"><markdown-element></markdown-element></div>
+</dialog>
+<script src="../markdown-element.js"></script>
+<script src="wantware-docs.js"></script>
+  <script src="../devloiter/devloiter.js"></script>
+  <devloiter-widget height="160"></devloiter-widget>
+</body>
+</html>
